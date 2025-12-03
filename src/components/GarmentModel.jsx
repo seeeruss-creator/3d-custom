@@ -46,7 +46,7 @@ function makeBump() {
   return tex;
 }
 
-export default function GarmentModel({ garment, colors, fabric, pattern, style, measurements, personalization }) {
+export default function GarmentModel({ garment, colors, fabric, pattern, style, measurements, personalization, pantsType }) {
   const baseColor = colors.fabric;
   const accent = colors.stitching;
   const map = useMemo(() => makePattern(pattern, baseColor, accent), [pattern, baseColor, accent]);
@@ -77,6 +77,9 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   const barongModel = useGLTF('/barong tagalog shirt 3d model.glb');
   const suit1 = useGLTF('/business suit 3d model.glb');
   const suit2 = useGLTF('/business suit 3d model (1).glb');
+  const pantsCasualMen = useGLTF('/pants 3d model.glb');
+  const pantsFormalMen = useGLTF('/dress pants 3d model.glb');
+  const pantsFormalWomen = useGLTF('/denim jeans 3d model.glb');
 
   // Determine which model to use based on garment type
   let selectedModel = null;
@@ -116,92 +119,40 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
     }
   }, [modelScene, garment, materialProps, use3DModel]);
 
+  // Pants model selection and setup (hooks must be at top level)
+  let pantsModel = null;
   if (garment === 'pants') {
+    if (pantsType === 'casual-men') {
+      pantsModel = pantsCasualMen.scene;
+    } else if (pantsType === 'formal-men') {
+      pantsModel = pantsFormalMen.scene;
+    } else if (pantsType === 'formal-women') {
+      pantsModel = pantsFormalWomen.scene;
+    }
+  }
+
+  const pantsModelScene = useMemo(() => pantsModel ? pantsModel.clone() : null, [pantsModel]);
+
+  useLayoutEffect(() => {
+    if (pantsModelScene) {
+      pantsModelScene.traverse((child) => {
+        if (child.isMesh) {
+          child.material = new THREE.MeshPhysicalMaterial(materialProps);
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [pantsModelScene, materialProps]);
+
+  if (garment === 'pants') {
+    if (!pantsModelScene) return null;
+
     return (
-      <group>
-        <RoundedBox args={[1.1 * hipsS, 0.5, 0.6]} radius={0.1} smoothness={6} position={[0, inseamS * 1.5, 0]}>
-          <meshPhysicalMaterial {...materialProps} />
-          <Edges scale={1} threshold={12} color={colors.stitching} />
-        </RoundedBox>
-        <mesh position={[0, inseamS * 1.58, 0]}>
-          <torusGeometry args={[0.55 * hipsS, 0.06, 24, 64]} />
-          <meshPhysicalMaterial {...materialProps} />
-        </mesh>
-        {[-0.35 * hipsS, 0, 0.35 * hipsS].map((x, i) => (
-          <mesh key={i} position={[x, inseamS * 1.64, 0.05]}>
-            <boxGeometry args={[0.08, 0.12, 0.04]} />
-            <meshPhysicalMaterial color={colors.lining} roughness={0.7} />
-          </mesh>
-        ))}
-        <mesh position={[0, inseamS * 1.45, 0.44]}>
-          <boxGeometry args={[0.14, 0.28, 0.02]} />
-          <meshPhysicalMaterial color={colors.lining} roughness={0.8} />
-        </mesh>
-        {(['slim', 'regular', 'relaxed'].includes(style.fit) ? style.fit : 'regular') && (
-          <>
-            <Capsule args={[0.42 * hipsS, 0.9 * inseamS, 8, 16]} position={[-0.47 * hipsS, 1.05 * inseamS, 0]}>
-              <meshPhysicalMaterial {...materialProps} />
-              <Edges scale={1} threshold={15} color={colors.lining} />
-            </Capsule>
-            <Capsule args={[0.42 * hipsS, 0.9 * inseamS, 8, 16]} position={[0.47 * hipsS, 1.05 * inseamS, 0]}>
-              <meshPhysicalMaterial {...materialProps} />
-              <Edges scale={1} threshold={15} color={colors.lining} />
-            </Capsule>
-            {(() => {
-              const taper = style.fit === 'slim' ? 0.78 : style.fit === 'relaxed' ? 1.08 : 0.92;
-              return (
-                <group>
-                  <Capsule args={[0.32 * hipsS * taper, 0.8 * inseamS, 8, 16]} position={[-0.47 * hipsS, 0.4 * inseamS, 0]}>
-                    <meshPhysicalMaterial {...materialProps} />
-                    <Edges scale={1} threshold={15} color={colors.lining} />
-                  </Capsule>
-                  <Capsule args={[0.32 * hipsS * taper, 0.8 * inseamS, 8, 16]} position={[0.47 * hipsS, 0.4 * inseamS, 0]}>
-                    <meshPhysicalMaterial {...materialProps} />
-                    <Edges scale={1} threshold={15} color={colors.lining} />
-                  </Capsule>
-                </group>
-              );
-            })()}
-          </>
-        )}
-        {[-0.47 * hipsS, 0.47 * hipsS].map((x, i) => (
-          <mesh key={`crease-${i}`} position={[x, 0.8 * inseamS, 0.43]} rotation={[0, 0, 0]}>
-            <boxGeometry args={[0.01, 1.5 * inseamS, 0.01]} />
-            <meshPhysicalMaterial color={colors.stitching} roughness={0.6} />
-          </mesh>
-        ))}
-        {style.cuffs === 'turn-up' && (
-          <>
-            <mesh position={[-0.47 * hipsS, 0.01, 0]}>
-              <torusGeometry args={[0.18 * inseamS, 0.03, 16, 64]} />
-              <meshPhysicalMaterial color={liningColor} roughness={0.8} />
-            </mesh>
-            <mesh position={[0.47 * hipsS, 0.01, 0]}>
-              <torusGeometry args={[0.18 * inseamS, 0.03, 16, 64]} />
-              <meshPhysicalMaterial color={liningColor} roughness={0.8} />
-            </mesh>
-          </>
-        )}
-        {style.pleats !== 'none' && (
-          <>
-            <mesh position={[-0.47 * hipsS, 1.45 * inseamS, 0.41]}>
-              <boxGeometry args={[0.02, 0.24, 0.02]} />
-              <meshPhysicalMaterial color={colors.stitching} />
-            </mesh>
-            <mesh position={[0.47 * hipsS, 1.45 * inseamS, 0.41]}>
-              <boxGeometry args={[0.02, 0.24, 0.02]} />
-              <meshPhysicalMaterial color={colors.stitching} />
-            </mesh>
-            {style.pleats === 'double' && (
-              <mesh position={[0, 1.45 * inseamS, 0.41]}>
-                <boxGeometry args={[0.02, 0.24, 0.02]} />
-                <meshPhysicalMaterial color={colors.stitching} />
-              </mesh>
-            )}
-          </>
-        )}
+      <group position={[0, 0, 0]} scale={1.5}>
+        <primitive object={pantsModelScene} />
         {personalization.initials && (
-          <Text position={[0, inseamS * 1.6, 0.45]} fontSize={personalization.size * 0.25} color={accent}>
+          <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
             {personalization.initials}
           </Text>
         )}
@@ -217,21 +168,11 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
 
 
   if (garment.startsWith('coat')) {
+    if (!modelScene) return null;
     return (
       <group position={[0, 0, 0]} scale={1.5}>
         <primitive object={modelScene} />
-        {Array.from({ length: buttons }).map((_, i) => (
-          <mesh key={`L${i}`} position={[-0.15, 1.0 - i * 0.15, 0.28]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
-          </mesh>
-        ))}
-        {Array.from({ length: buttons }).map((_, i) => (
-          <mesh key={`R${i}`} position={[0.15, 1.0 - i * 0.15, 0.28]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
-          </mesh>
-        ))}
+        {/* Default buttons removed - use 3D Buttons panel to add custom buttons */}
         {personalization.initials && (
           <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
             {personalization.initials}
@@ -243,6 +184,7 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
 
   // Render Barong with 3D model
   if (garment === 'barong') {
+    if (!modelScene) return null;
     return (
       <group position={[0, 0, 0]} scale={1.5}>
         <primitive object={modelScene} />
@@ -257,21 +199,11 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
 
   // Render Suit with 3D model
   if (garment.startsWith('suit')) {
+    if (!modelScene) return null;
     return (
       <group position={[0, 0, 0]} scale={1.5}>
         <primitive object={modelScene} />
-        {Array.from({ length: style.buttons || 2 }).map((_, i) => (
-          <mesh key={`L${i}`} position={[-0.15, 1.0 - i * 0.15, 0.28]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
-          </mesh>
-        ))}
-        {Array.from({ length: style.buttons || 2 }).map((_, i) => (
-          <mesh key={`R${i}`} position={[0.15, 1.0 - i * 0.15, 0.28]}>
-            <sphereGeometry args={[0.03, 16, 16]} />
-            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
-          </mesh>
-        ))}
+        {/* Default buttons removed - use 3D Buttons panel to add custom buttons */}
         {personalization.initials && (
           <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
             {personalization.initials}
@@ -450,4 +382,7 @@ useGLTF.preload('/blazer 3d model.glb');
 useGLTF.preload('/barong tagalog shirt 3d model.glb');
 useGLTF.preload('/business suit 3d model.glb');
 useGLTF.preload('/business suit 3d model (1).glb');
+useGLTF.preload('/pants 3d model.glb');
+useGLTF.preload('/dress pants 3d model.glb');
+useGLTF.preload('/denim jeans 3d model.glb');
 

@@ -45,6 +45,8 @@ export default function App() {
   const [designImage, setDesignImage] = useState(null);
   const [notes, setNotes] = useState('');
   const [showReview, setShowReview] = useState(false);
+  const [buttons, setButtons] = useState([]);
+  const [pantsType, setPantsType] = useState('casual-men');
 
   useEffect(() => {
     const saved = localStorage.getItem('tailorDesign');
@@ -60,6 +62,8 @@ export default function App() {
         setPersonalization(v.personalization || defaultPersonalization);
         setDesignImage(v.designImage || null);
         setNotes(v.notes || '');
+        setButtons(v.buttons || []);
+        setPantsType(v.pantsType || 'casual-men');
       }
     }
   }, []);
@@ -79,7 +83,9 @@ export default function App() {
     personalization,
     designImage,
     notes,
-  }), [garment, colors, fabric, pattern, style, measurements, personalization]);
+    buttons,
+    pantsType,
+  }), [garment, colors, fabric, pattern, style, measurements, personalization, buttons]);
 
   const onSave = () => {
     localStorage.setItem('tailorDesign', JSON.stringify(summary));
@@ -127,6 +133,10 @@ export default function App() {
           setDesignImage={setDesignImage}
           notes={notes}
           setNotes={setNotes}
+          buttons={buttons}
+          setButtons={setButtons}
+          pantsType={pantsType}
+          setPantsType={setPantsType}
           onReview={() => setShowReview(true)}
         />
         <div className="summary">
@@ -144,6 +154,9 @@ export default function App() {
           style={style}
           measurements={measurements}
           personalization={personalization}
+          buttons={buttons}
+          setButtons={setButtons}
+          pantsType={pantsType}
         />
       </div>
     </div>

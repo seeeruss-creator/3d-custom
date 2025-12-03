@@ -1,8 +1,9 @@
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Stage, Grid } from '@react-three/drei';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, Suspense, useState } from 'react';
 import * as THREE from 'three';
 import GarmentModel from './GarmentModel';
+import DraggableButton from './DraggableButton';
 
 function ExportButton() {
   const { gl, scene, camera } = useThree();
@@ -22,18 +23,19 @@ function ExportButton() {
   return null;
 }
 
-export default function Viewer3D({ garment, colors, fabric, pattern, style, measurements, personalization }) {
+export default function Viewer3D({ garment, colors, fabric, pattern, style, measurements, personalization, buttons, setButtons, pantsType }) {
+  const [selectedButton, setSelectedButton] = useState(null);
+  const [isAnyButtonMoving, setIsAnyButtonMoving] = useState(false);
+
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas camera={{ position: [0, 1.6, 5], fov: 50 }} shadows dpr={[1, 2]} gl={{ toneMapping: THREE.ACESFilmicToneMapping }}>
-        <color attach="background" args={garment === 'pants' ? [0.08, 0.08, 0.09] : [0.96, 0.94, 0.92]} />
-        {garment === 'pants' ? (
-          <fog attach="fog" args={[new THREE.Color(0.08, 0.08, 0.09), 8, 22]} />
-        ) : (
-          <fog attach="fog" args={[new THREE.Color(0.96, 0.94, 0.92), 10, 30]} />
-        )}
+        <color attach="background" args={[0, 0, 0]} />
+        <fog attach="fog" args={[new THREE.Color(0, 0, 0), 10, 30]} />
         <Stage intensity={0.6} environment="studio" adjustCamera={false} shadows="accumulative">
-          <GarmentModel garment={garment} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} />
+          <Suspense fallback={<mesh><boxGeometry args={[1, 2, 0.5]} /><meshStandardMaterial color="#cccccc" /></mesh>}>
+            <GarmentModel garment={garment} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} pantsType={pantsType} />
+          </Suspense>
         </Stage>
         <directionalLight position={[4, 6, -3]} intensity={0.6} color={garment === 'pants' ? '#b0c7ff' : '#bcd0ff'} />
         <directionalLight position={[-5, 3, 5]} intensity={0.3} color={garment === 'pants' ? '#ffd6b3' : '#ffddb7'} />
@@ -41,8 +43,24 @@ export default function Viewer3D({ garment, colors, fabric, pattern, style, meas
           <Grid args={[10, 10]} position={[0, -0.001, 0]} cellSize={0.6} cellThickness={0.8} sectionSize={3.6} sectionThickness={1.2} fadeDistance={20} fadeStrength={1} infiniteGrid />
         )}
         <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.6} far={4.5} />
-        <OrbitControls enablePan={false} />
+        <OrbitControls enablePan={false} enabled={!isAnyButtonMoving} />
         <Environment preset="studio" />
+        {buttons && buttons.map((btn) => (
+          <DraggableButton
+            key={btn.id}
+            id={btn.id}
+            modelPath={btn.modelPath}
+            position={btn.position}
+            color={btn.color}
+            scale={btn.scale || 0.15}
+            isSelected={selectedButton === btn.id}
+            onSelect={setSelectedButton}
+            onPositionChange={(id, newPos) => {
+              setButtons((prev) => prev.map((b) => b.id === id ? { ...b, position: newPos } : b));
+            }}
+            onMovingChange={setIsAnyButtonMoving}
+          />
+        ))}
         <ExportButton />
       </Canvas>
     </div>
