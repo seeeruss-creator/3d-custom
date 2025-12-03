@@ -1,0 +1,453 @@
+import { RoundedBox, Capsule, Text, Edges, useGLTF } from '@react-three/drei';
+import { useMemo, useLayoutEffect } from 'react';
+import * as THREE from 'three';
+
+function makePattern(type, base, accent) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = base; ctx.fillRect(0, 0, 256, 256);
+  if (type === 'minimal-stripe') {
+    ctx.fillStyle = accent;
+    for (let i = 0; i < 256; i += 12) { ctx.fillRect(i, 0, 2, 256); }
+  } else if (type === 'minimal-check') {
+    ctx.strokeStyle = accent; ctx.lineWidth = 1;
+    for (let i = 0; i < 256; i += 14) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(256, i); ctx.stroke(); }
+  } else if (type === 'embroidery-1') {
+    ctx.strokeStyle = accent; ctx.lineWidth = 2;
+    for (let i = 0; i < 10; i++) { const x = 20 + i * 20; ctx.beginPath(); ctx.arc(128, x, 16, 0, Math.PI * 2); ctx.stroke(); }
+  } else if (type === 'embroidery-2') {
+    ctx.fillStyle = accent;
+    for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.moveTo(32 + i * 24, 40); ctx.lineTo(48 + i * 24, 56); ctx.lineTo(16 + i * 24, 56); ctx.closePath(); ctx.fill(); }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(2, 2);
+  return tex;
+}
+
+function makeBump() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(256, 256);
+  for (let y = 0; y < 256; y++) {
+    for (let x = 0; x < 256; x++) {
+      const i = (y * 256 + x) * 4;
+      const n = (Math.sin(x * 0.15) + Math.cos(y * 0.13)) * 0.5 + Math.random() * 0.05;
+      const v = Math.floor(128 + 20 * n);
+      img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(4, 4);
+  return tex;
+}
+
+export default function GarmentModel({ garment, colors, fabric, pattern, style, measurements, personalization }) {
+  const baseColor = colors.fabric;
+  const accent = colors.stitching;
+  const map = useMemo(() => makePattern(pattern, baseColor, accent), [pattern, baseColor, accent]);
+  const bump = useMemo(() => makeBump(), []);
+  const materialProps = useMemo(() => {
+    const rough = fabric === 'silk' ? 0.25 : fabric === 'linen' ? 0.85 : fabric === 'cotton' ? 0.6 : 0.9;
+    const metal = fabric === 'silk' ? 0.1 : 0.0;
+    const transparent = garment === 'barong';
+    const opacity = garment === 'barong' ? Math.max(0.15, Math.min(0.85, style.transparency || 0.35)) : 1;
+    const bumpScale = fabric === 'silk' ? 0.02 : fabric === 'linen' ? 0.08 : fabric === 'cotton' ? 0.06 : 0.07;
+    return { roughness: rough, metalness: metal, map, color: baseColor, transparent, opacity, sheen: 1, sheenColor: baseColor, bumpMap: bump, bumpScale };
+  }, [fabric, baseColor, map, garment, style, bump]);
+
+  const chestS = measurements.chest / 38;
+  const waistS = measurements.waist / 32;
+  const hipsS = measurements.hips / 38;
+  const shoulderS = measurements.shoulders / 18;
+  const sleeveS = measurements.sleeveLength / 25;
+  const inseamS = measurements.inseam / 30;
+
+  const buttonColor = new THREE.Color(colors.button);
+  const liningColor = new THREE.Color(colors.lining);
+
+  // Load all 3D models unconditionally (hooks must be called at top level)
+  const blackBlazer = useGLTF('/black blazer 3d model.glb');
+  const blazerWomen = useGLTF('/blazer 3d model.glb');
+  const tealCoat = useGLTF('/teal long coat 3d model.glb');
+  const barongModel = useGLTF('/barong tagalog shirt 3d model.glb');
+  const suit1 = useGLTF('/business suit 3d model.glb');
+  const suit2 = useGLTF('/business suit 3d model (1).glb');
+
+  // Determine which model to use based on garment type
+  let selectedModel = null;
+  let use3DModel = false;
+
+  if (garment === 'coat-men') {
+    use3DModel = true;
+    selectedModel = blackBlazer.scene;
+  } else if (garment === 'coat-women') {
+    use3DModel = true;
+    selectedModel = blazerWomen.scene;
+  } else if (garment === 'coat-teal') {
+    use3DModel = true;
+    selectedModel = tealCoat.scene;
+  } else if (garment === 'barong') {
+    use3DModel = true;
+    selectedModel = barongModel.scene;
+  } else if (garment === 'suit-1') {
+    use3DModel = true;
+    selectedModel = suit1.scene;
+  } else if (garment === 'suit-2') {
+    use3DModel = true;
+    selectedModel = suit2.scene;
+  }
+
+  const modelScene = useMemo(() => selectedModel ? selectedModel.clone() : null, [selectedModel]);
+
+  useLayoutEffect(() => {
+    if (use3DModel && modelScene) {
+      modelScene.traverse((child) => {
+        if (child.isMesh) {
+          child.material = new THREE.MeshPhysicalMaterial(materialProps);
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [modelScene, garment, materialProps, use3DModel]);
+
+  if (garment === 'pants') {
+    return (
+      <group>
+        <RoundedBox args={[1.1 * hipsS, 0.5, 0.6]} radius={0.1} smoothness={6} position={[0, inseamS * 1.5, 0]}>
+          <meshPhysicalMaterial {...materialProps} />
+          <Edges scale={1} threshold={12} color={colors.stitching} />
+        </RoundedBox>
+        <mesh position={[0, inseamS * 1.58, 0]}>
+          <torusGeometry args={[0.55 * hipsS, 0.06, 24, 64]} />
+          <meshPhysicalMaterial {...materialProps} />
+        </mesh>
+        {[-0.35 * hipsS, 0, 0.35 * hipsS].map((x, i) => (
+          <mesh key={i} position={[x, inseamS * 1.64, 0.05]}>
+            <boxGeometry args={[0.08, 0.12, 0.04]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.7} />
+          </mesh>
+        ))}
+        <mesh position={[0, inseamS * 1.45, 0.44]}>
+          <boxGeometry args={[0.14, 0.28, 0.02]} />
+          <meshPhysicalMaterial color={colors.lining} roughness={0.8} />
+        </mesh>
+        {(['slim', 'regular', 'relaxed'].includes(style.fit) ? style.fit : 'regular') && (
+          <>
+            <Capsule args={[0.42 * hipsS, 0.9 * inseamS, 8, 16]} position={[-0.47 * hipsS, 1.05 * inseamS, 0]}>
+              <meshPhysicalMaterial {...materialProps} />
+              <Edges scale={1} threshold={15} color={colors.lining} />
+            </Capsule>
+            <Capsule args={[0.42 * hipsS, 0.9 * inseamS, 8, 16]} position={[0.47 * hipsS, 1.05 * inseamS, 0]}>
+              <meshPhysicalMaterial {...materialProps} />
+              <Edges scale={1} threshold={15} color={colors.lining} />
+            </Capsule>
+            {(() => {
+              const taper = style.fit === 'slim' ? 0.78 : style.fit === 'relaxed' ? 1.08 : 0.92;
+              return (
+                <group>
+                  <Capsule args={[0.32 * hipsS * taper, 0.8 * inseamS, 8, 16]} position={[-0.47 * hipsS, 0.4 * inseamS, 0]}>
+                    <meshPhysicalMaterial {...materialProps} />
+                    <Edges scale={1} threshold={15} color={colors.lining} />
+                  </Capsule>
+                  <Capsule args={[0.32 * hipsS * taper, 0.8 * inseamS, 8, 16]} position={[0.47 * hipsS, 0.4 * inseamS, 0]}>
+                    <meshPhysicalMaterial {...materialProps} />
+                    <Edges scale={1} threshold={15} color={colors.lining} />
+                  </Capsule>
+                </group>
+              );
+            })()}
+          </>
+        )}
+        {[-0.47 * hipsS, 0.47 * hipsS].map((x, i) => (
+          <mesh key={`crease-${i}`} position={[x, 0.8 * inseamS, 0.43]} rotation={[0, 0, 0]}>
+            <boxGeometry args={[0.01, 1.5 * inseamS, 0.01]} />
+            <meshPhysicalMaterial color={colors.stitching} roughness={0.6} />
+          </mesh>
+        ))}
+        {style.cuffs === 'turn-up' && (
+          <>
+            <mesh position={[-0.47 * hipsS, 0.01, 0]}>
+              <torusGeometry args={[0.18 * inseamS, 0.03, 16, 64]} />
+              <meshPhysicalMaterial color={liningColor} roughness={0.8} />
+            </mesh>
+            <mesh position={[0.47 * hipsS, 0.01, 0]}>
+              <torusGeometry args={[0.18 * inseamS, 0.03, 16, 64]} />
+              <meshPhysicalMaterial color={liningColor} roughness={0.8} />
+            </mesh>
+          </>
+        )}
+        {style.pleats !== 'none' && (
+          <>
+            <mesh position={[-0.47 * hipsS, 1.45 * inseamS, 0.41]}>
+              <boxGeometry args={[0.02, 0.24, 0.02]} />
+              <meshPhysicalMaterial color={colors.stitching} />
+            </mesh>
+            <mesh position={[0.47 * hipsS, 1.45 * inseamS, 0.41]}>
+              <boxGeometry args={[0.02, 0.24, 0.02]} />
+              <meshPhysicalMaterial color={colors.stitching} />
+            </mesh>
+            {style.pleats === 'double' && (
+              <mesh position={[0, 1.45 * inseamS, 0.41]}>
+                <boxGeometry args={[0.02, 0.24, 0.02]} />
+                <meshPhysicalMaterial color={colors.stitching} />
+              </mesh>
+            )}
+          </>
+        )}
+        {personalization.initials && (
+          <Text position={[0, inseamS * 1.6, 0.45]} fontSize={personalization.size * 0.25} color={accent}>
+            {personalization.initials}
+          </Text>
+        )}
+      </group>
+    );
+  }
+
+  const isCoat = garment.startsWith('coat') || garment === 'suit';
+  const lapel = isCoat ? style.lapel : 'shawl';
+  const buttons = isCoat ? style.buttons : 0;
+  const torsoH = garment.startsWith('coat') ? 3.0 * waistS : 2.4 * waistS;
+
+
+
+  if (garment.startsWith('coat')) {
+    return (
+      <group position={[0, 0, 0]} scale={1.5}>
+        <primitive object={modelScene} />
+        {Array.from({ length: buttons }).map((_, i) => (
+          <mesh key={`L${i}`} position={[-0.15, 1.0 - i * 0.15, 0.28]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+          </mesh>
+        ))}
+        {Array.from({ length: buttons }).map((_, i) => (
+          <mesh key={`R${i}`} position={[0.15, 1.0 - i * 0.15, 0.28]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+          </mesh>
+        ))}
+        {personalization.initials && (
+          <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
+            {personalization.initials}
+          </Text>
+        )}
+      </group>
+    );
+  }
+
+  // Render Barong with 3D model
+  if (garment === 'barong') {
+    return (
+      <group position={[0, 0, 0]} scale={1.5}>
+        <primitive object={modelScene} />
+        {personalization.initials && (
+          <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
+            {personalization.initials}
+          </Text>
+        )}
+      </group>
+    );
+  }
+
+  // Render Suit with 3D model
+  if (garment.startsWith('suit')) {
+    return (
+      <group position={[0, 0, 0]} scale={1.5}>
+        <primitive object={modelScene} />
+        {Array.from({ length: style.buttons || 2 }).map((_, i) => (
+          <mesh key={`L${i}`} position={[-0.15, 1.0 - i * 0.15, 0.28]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+          </mesh>
+        ))}
+        {Array.from({ length: style.buttons || 2 }).map((_, i) => (
+          <mesh key={`R${i}`} position={[0.15, 1.0 - i * 0.15, 0.28]}>
+            <sphereGeometry args={[0.03, 16, 16]} />
+            <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+          </mesh>
+        ))}
+        {personalization.initials && (
+          <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
+            {personalization.initials}
+          </Text>
+        )}
+      </group>
+    );
+  }
+
+  return (
+    <group>
+      <RoundedBox args={[1.05 * chestS, torsoH, 0.4]} radius={0.2} smoothness={8} position={[-0.52 * chestS, 1.2, 0]}>
+        <meshPhysicalMaterial {...materialProps} />
+        <Edges scale={1} threshold={12} color={colors.lining} />
+      </RoundedBox>
+      <RoundedBox args={[1.05 * chestS, torsoH, 0.4]} radius={0.2} smoothness={8} position={[0.52 * chestS, 1.2, 0]}>
+        <meshPhysicalMaterial {...materialProps} />
+        <Edges scale={1} threshold={12} color={colors.lining} />
+      </RoundedBox>
+      <mesh position={[0, 1.55, 0.38]}>
+        <boxGeometry args={[1.4 * chestS, 0.22, 0.06]} />
+        <meshPhysicalMaterial color={liningColor} roughness={0.7} metalness={0.05} sheen={0.6} />
+      </mesh>
+      <Capsule args={[0.35 * shoulderS, 1.4 * sleeveS, 8, 16]} position={[-1.2 * shoulderS, 1.2, 0]} rotation={[0, 0, Math.PI / 16]}>
+        <meshPhysicalMaterial color={liningColor} roughness={0.9} opacity={materialProps.opacity} transparent={materialProps.transparent} sheen={0.4} />
+        <Edges scale={1} threshold={12} color={colors.stitching} />
+      </Capsule>
+      <Capsule args={[0.35 * shoulderS, 1.4 * sleeveS, 8, 16]} position={[1.2 * shoulderS, 1.2, 0]} rotation={[0, 0, -Math.PI / 16]}>
+        <meshPhysicalMaterial color={liningColor} roughness={0.9} opacity={materialProps.opacity} transparent={materialProps.transparent} sheen={0.4} />
+        <Edges scale={1} threshold={12} color={colors.stitching} />
+      </Capsule>
+      {isCoat && Array.from({ length: buttons }).map((_, i) => (
+        <mesh key={`L${i}`} position={[-0.2, 1.1 - i * 0.25, 0.42]}>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+        </mesh>
+      ))}
+      {isCoat && Array.from({ length: buttons }).map((_, i) => (
+        <mesh key={`R${i}`} position={[0.2, 1.1 - i * 0.25, 0.42]}>
+          <sphereGeometry args={[0.05, 16, 16]} />
+          <meshPhysicalMaterial color={buttonColor} metalness={0.2} roughness={0.5} />
+        </mesh>
+      ))}
+      {garment === 'barong' && style.embroidery && (
+        <mesh position={[0, 1.2, 0.41]}>
+          <planeGeometry args={[1.2 * chestS, 1.6 * waistS]} />
+          <meshPhysicalMaterial map={makePattern('embroidery-1', '#00000000', accent)} transparent />
+        </mesh>
+      )}
+      {personalization.initials && (
+        <Text position={[-0.5 * chestS + 0.2, 1.3, 0.41]} fontSize={personalization.size * 0.25} color={colors.stitching}>
+          {personalization.initials}
+        </Text>
+      )}
+      {lapel === 'peak' && (
+        <mesh position={[0, 1.6, 0.41]}>
+          <boxGeometry args={[1.2 * chestS, 0.1, 0.02]} />
+          <meshPhysicalMaterial color={colors.lining} />
+        </mesh>
+      )}
+      {lapel === 'shawl' && (
+        <mesh position={[0, 1.6, 0.41]}>
+          <torusGeometry args={[0.7 * chestS, 0.06, 16, 64, Math.PI]} />
+          <meshPhysicalMaterial color={colors.lining} />
+        </mesh>
+      )}
+      {isCoat && (
+        <>
+          <mesh position={[-0.25 * chestS, 1.45, 0.41]} rotation={[0, 0, Math.PI / 14]}>
+            <boxGeometry args={[0.5 * chestS, 0.18, 0.02]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.6} />
+          </mesh>
+          <mesh position={[0.25 * chestS, 1.45, 0.41]} rotation={[0, 0, -Math.PI / 14]}>
+            <boxGeometry args={[0.5 * chestS, 0.18, 0.02]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.6} />
+          </mesh>
+        </>
+      )}
+      {isCoat && (style.pocket !== 'none') && (
+        <>
+          <mesh position={[-0.45 * chestS, 0.7, 0.41]}>
+            <boxGeometry args={[0.38, 0.12, 0.02]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.8} />
+          </mesh>
+          <mesh position={[0.45 * chestS, 0.7, 0.41]}>
+            <boxGeometry args={[0.38, 0.12, 0.02]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.8} />
+          </mesh>
+        </>
+      )}
+      {garment.startsWith('coat') && style.vents !== 'none' && (
+        <mesh position={[0, 0.6, -0.39]}>
+          <boxGeometry args={[0.04, 0.8, 0.01]} />
+          <meshPhysicalMaterial color={colors.stitching} roughness={0.8} />
+        </mesh>
+      )}
+      {isCoat && (
+        <>
+          <mesh position={[-1.2 * shoulderS, 0.5, 0]}>
+            <boxGeometry args={[0.24, 0.06, 0.12]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.7} />
+          </mesh>
+          <mesh position={[1.2 * shoulderS, 0.5, 0]}>
+            <boxGeometry args={[0.24, 0.06, 0.12]} />
+            <meshPhysicalMaterial color={colors.lining} roughness={0.7} />
+          </mesh>
+        </>
+      )}
+      {garment === 'barong' && (
+        <>
+          <mesh position={[0, 1.58, 0.41]}>
+            <boxGeometry args={[0.9 * chestS, 0.06, 0.02]} />
+            <meshPhysicalMaterial color={liningColor} roughness={0.7} opacity={materialProps.opacity} transparent={materialProps.transparent} />
+          </mesh>
+          <mesh position={[0, 1.35, 0.42]}>
+            <boxGeometry args={[0.18, 1.2, 0.02]} />
+            <meshPhysicalMaterial color={liningColor} roughness={0.7} opacity={materialProps.opacity} transparent={materialProps.transparent} />
+          </mesh>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <mesh key={`B${i}`} position={[0, 1.5 - i * 0.22, 0.43]}>
+              <sphereGeometry args={[0.035, 16, 16]} />
+              <meshPhysicalMaterial color={buttonColor} roughness={0.5} />
+            </mesh>
+          ))}
+          {style.collar === 'mandarin' && (
+            <mesh position={[0, 1.62, 0.38]}>
+              <torusGeometry args={[0.36 * shoulderS, 0.035, 16, 64]} />
+              <meshPhysicalMaterial color={liningColor} roughness={0.6} opacity={materialProps.opacity} transparent />
+            </mesh>
+          )}
+          {style.collar === 'classic' && (
+            <>
+              <mesh position={[-0.22, 1.62, 0.41]} rotation={[0, 0, Math.PI / 9]}>
+                <boxGeometry args={[0.36, 0.1, 0.02]} />
+                <meshPhysicalMaterial color={liningColor} roughness={0.6} opacity={materialProps.opacity} transparent />
+              </mesh>
+              <mesh position={[0.22, 1.62, 0.41]} rotation={[0, 0, -Math.PI / 9]}>
+                <boxGeometry args={[0.36, 0.1, 0.02]} />
+                <meshPhysicalMaterial color={liningColor} roughness={0.6} opacity={materialProps.opacity} transparent />
+              </mesh>
+            </>
+          )}
+        </>
+      )}
+      {garment === 'suit' && (
+        <>
+          <mesh position={[0, 1.35, 0.43]}>
+            <coneGeometry args={[0.12, 0.32, 24]} />
+            <meshPhysicalMaterial color={colors.button} roughness={0.4} metalness={0.2} />
+          </mesh>
+          <mesh position={[-0.18, 1.55, 0.41]} rotation={[0, 0, Math.PI / 8]}>
+            <boxGeometry args={[0.35, 0.1, 0.02]} />
+            <meshPhysicalMaterial color={liningColor} />
+          </mesh>
+          <mesh position={[0.18, 1.55, 0.41]} rotation={[0, 0, -Math.PI / 8]}>
+            <boxGeometry args={[0.35, 0.1, 0.02]} />
+            <meshPhysicalMaterial color={liningColor} />
+          </mesh>
+          <Capsule args={[0.38 * hipsS, 1.35 * inseamS, 8, 16]} position={[-0.42 * hipsS, 0.7 * inseamS, 0]}>
+            <meshPhysicalMaterial {...materialProps} />
+            <Edges scale={1} threshold={15} color={colors.lining} />
+          </Capsule>
+          <Capsule args={[0.38 * hipsS, 1.35 * inseamS, 8, 16]} position={[0.42 * hipsS, 0.7 * inseamS, 0]}>
+            <meshPhysicalMaterial {...materialProps} />
+            <Edges scale={1} threshold={15} color={colors.lining} />
+          </Capsule>
+        </>
+      )}
+    </group>
+  );
+}
+
+useGLTF.preload('/teal long coat 3d model.glb');
+useGLTF.preload('/black blazer 3d model.glb');
+useGLTF.preload('/blazer 3d model.glb');
+useGLTF.preload('/barong tagalog shirt 3d model.glb');
+useGLTF.preload('/business suit 3d model.glb');
+useGLTF.preload('/business suit 3d model (1).glb');
+
