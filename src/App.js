@@ -38,6 +38,7 @@ export default function App() {
   const [garment, setGarment] = useState('coat-men');
   const [size, setSize] = useState('medium'); // Added size state for blazers
   const [fit, setFit] = useState('regular'); // Added fit state for all garments
+  const [modelSize, setModelSize] = useState('full'); // Added model size state (full or short)
   const [colors, setColors] = useState(defaultColors);
   const [fabric, setFabric] = useState('wool');
   const [pattern, setPattern] = useState('none');
@@ -58,6 +59,7 @@ export default function App() {
         setGarment(v.garment || 'coat');
         setSize(v.size || 'medium');
         setFit(v.fit || 'regular');
+        setModelSize(v.modelSize || 'full');
         setColors(v.colors || defaultColors);
         setFabric(v.fabric || 'wool');
         setPattern(v.pattern || 'none');
@@ -81,6 +83,7 @@ export default function App() {
     garment,
     size,
     fit,
+    modelSize,
     colors,
     fabric,
     pattern,
@@ -91,7 +94,7 @@ export default function App() {
     notes,
     buttons,
     pantsType,
-  }), [garment, size, fit, colors, fabric, pattern, style, measurements, personalization, buttons]);
+  }), [garment, size, fit, modelSize, colors, fabric, pattern, style, measurements, personalization, buttons]);
 
   const onSave = () => {
     localStorage.setItem('tailorDesign', JSON.stringify(summary));
@@ -131,6 +134,8 @@ export default function App() {
           setSize={setSize}
           fit={fit}
           setFit={setFit}
+          modelSize={modelSize}
+          setModelSize={setModelSize}
           colors={colors}
           setColors={setColors}
           fabric={fabric}
@@ -160,6 +165,7 @@ export default function App() {
           garment={garment}
           size={size}
           fit={fit}
+          modelSize={modelSize}
           colors={colors}
           fabric={fabric}
           pattern={pattern}

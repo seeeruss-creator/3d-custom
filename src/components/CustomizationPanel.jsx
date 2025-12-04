@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-export default function CustomizationPanel({ garment, setGarment, size, setSize, fit, setFit, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, pantsType, setPantsType, onReview }) {
+export default function CustomizationPanel({ garment, setGarment, size, setSize, fit, setFit, modelSize, setModelSize, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, pantsType, setPantsType, onReview }) {
   const [selectedButtonModel, setSelectedButtonModel] = useState('/orange button 3d model.glb');
 
   const availableButtonModels = [
@@ -55,6 +55,14 @@ export default function CustomizationPanel({ garment, setGarment, size, setSize,
                 <option value="coat-women">Blazer (Women)</option>
                 <option value="coat-women-plain">Blazer Coat (Women) Plain</option>
                 <option value="coat-teal">Teal Long Coat</option>
+              </select>
+            </label>
+          </div>
+          <div className="row">
+            <label>Model Size
+              <select value={modelSize} onChange={e => setModelSize(e.target.value)}>
+                <option value="full">Full Size</option>
+                <option value="short">Short Model</option>
               </select>
             </label>
           </div>

@@ -46,7 +46,7 @@ function makeBump() {
   return tex;
 }
 
-export default function GarmentModel({ garment, size, fit, colors, fabric, pattern, style, measurements, personalization, pantsType }) {
+export default function GarmentModel({ garment, size, fit, modelSize, colors, fabric, pattern, style, measurements, personalization, pantsType }) {
   const baseColor = colors.fabric;
   const accent = colors.stitching;
   const map = useMemo(() => makePattern(pattern, baseColor, accent), [pattern, baseColor, accent]);
@@ -71,6 +71,7 @@ export default function GarmentModel({ garment, size, fit, colors, fabric, patte
   const liningColor = new THREE.Color(colors.lining);
 
   // Load all 3D models unconditionally (hooks must be called at top level)
+  // Full-size models
   const blackBlazer = useGLTF('/black blazer 3d model.glb');
   const blackBlazerPlain = useGLTF('/black blazer plain 3d model.glb');
   const blazerWomen = useGLTF('/blazer 3d model.glb');
@@ -83,25 +84,32 @@ export default function GarmentModel({ garment, size, fit, colors, fabric, patte
   const pantsFormalMen = useGLTF('/dress pants 3d model.glb');
   const pantsFormalWomen = useGLTF('/denim jeans 3d model.glb');
 
-  // Determine which model to use based on garment type
+  // Short models from public/short3d folder
+  const blackBlazerShort = useGLTF('/short3d/blazer short model.glb');
+  const blackBlazerPlainShort = useGLTF('/short3d/blazer short plain M model.glb');
+  const blazerWomenShort = useGLTF('/short3d/blazer W short model.glb');
+  const blazerWomenPlainShort = useGLTF('/short3d/blazer woman short plain model.glb');
+  const tealCoatShort = useGLTF('/short3d/trench coat 3d  short model.glb');
+
+  // Determine which model to use based on garment type and modelSize
   let selectedModel = null;
   let use3DModel = false;
 
   if (garment === 'coat-men') {
     use3DModel = true;
-    selectedModel = blackBlazer.scene;
+    selectedModel = modelSize === 'short' ? blackBlazerShort.scene : blackBlazer.scene;
   } else if (garment === 'coat-men-plain') {
     use3DModel = true;
-    selectedModel = blackBlazerPlain.scene;
+    selectedModel = modelSize === 'short' ? blackBlazerPlainShort.scene : blackBlazerPlain.scene;
   } else if (garment === 'coat-women') {
     use3DModel = true;
-    selectedModel = blazerWomen.scene;
+    selectedModel = modelSize === 'short' ? blazerWomenShort.scene : blazerWomen.scene;
   } else if (garment === 'coat-women-plain') {
     use3DModel = true;
-    selectedModel = blazerWomenPlain.scene;
+    selectedModel = modelSize === 'short' ? blazerWomenPlainShort.scene : blazerWomenPlain.scene;
   } else if (garment === 'coat-teal') {
     use3DModel = true;
-    selectedModel = tealCoat.scene;
+    selectedModel = modelSize === 'short' ? tealCoatShort.scene : tealCoat.scene;
   } else if (garment === 'barong') {
     use3DModel = true;
     selectedModel = barongModel.scene;
@@ -130,7 +138,7 @@ export default function GarmentModel({ garment, size, fit, colors, fabric, patte
         baseScale = 1.5; // Default scale
         break;
     }
-    
+
     // Adjust scale based on fit
     switch (fit) {
       case 'loose':
@@ -412,6 +420,7 @@ export default function GarmentModel({ garment, size, fit, colors, fabric, patte
   );
 }
 
+// Preload full-size models
 useGLTF.preload('/teal long coat 3d model.glb');
 useGLTF.preload('/black blazer 3d model.glb');
 useGLTF.preload('/black blazer plain 3d model.glb');
@@ -423,4 +432,11 @@ useGLTF.preload('/business suit 3d model (1).glb');
 useGLTF.preload('/pants 3d model.glb');
 useGLTF.preload('/dress pants 3d model.glb');
 useGLTF.preload('/denim jeans 3d model.glb');
+
+// Preload short models
+useGLTF.preload('/short3d/blazer short model.glb');
+useGLTF.preload('/short3d/blazer short plain M model.glb');
+useGLTF.preload('/short3d/blazer W short model.glb');
+useGLTF.preload('/short3d/blazer woman short plain model.glb');
+useGLTF.preload('/short3d/trench coat 3d  short model.glb');
 

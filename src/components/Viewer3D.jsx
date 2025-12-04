@@ -23,7 +23,7 @@ function ExportButton() {
   return null;
 }
 
-export default function Viewer3D({ garment, size, fit, colors, fabric, pattern, style, measurements, personalization, buttons, setButtons, pantsType }) {
+export default function Viewer3D({ garment, size, fit, modelSize, colors, fabric, pattern, style, measurements, personalization, buttons, setButtons, pantsType }) {
   const [selectedButton, setSelectedButton] = useState(null);
   const [isAnyButtonMoving, setIsAnyButtonMoving] = useState(false);
 
@@ -34,7 +34,7 @@ export default function Viewer3D({ garment, size, fit, colors, fabric, pattern, 
         <fog attach="fog" args={[new THREE.Color(0, 0, 0), 10, 30]} />
         <Stage intensity={0.6} environment="studio" adjustCamera={false} shadows="accumulative">
           <Suspense fallback={<mesh><boxGeometry args={[1, 2, 0.5]} /><meshStandardMaterial color="#cccccc" /></mesh>}>
-            <GarmentModel garment={garment} size={size} fit={fit} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} pantsType={pantsType} />
+            <GarmentModel garment={garment} size={size} fit={fit} modelSize={modelSize} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} pantsType={pantsType} />
           </Suspense>
         </Stage>
         <directionalLight position={[4, 6, -3]} intensity={0.6} color={garment === 'pants' ? '#b0c7ff' : '#bcd0ff'} />
