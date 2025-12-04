@@ -23,7 +23,7 @@ function ExportButton() {
   return null;
 }
 
-export default function Viewer3D({ garment, colors, fabric, pattern, style, measurements, personalization, buttons, setButtons, pantsType }) {
+export default function Viewer3D({ garment, size, fit, colors, fabric, pattern, style, measurements, personalization, buttons, setButtons, pantsType }) {
   const [selectedButton, setSelectedButton] = useState(null);
   const [isAnyButtonMoving, setIsAnyButtonMoving] = useState(false);
 
@@ -34,14 +34,12 @@ export default function Viewer3D({ garment, colors, fabric, pattern, style, meas
         <fog attach="fog" args={[new THREE.Color(0, 0, 0), 10, 30]} />
         <Stage intensity={0.6} environment="studio" adjustCamera={false} shadows="accumulative">
           <Suspense fallback={<mesh><boxGeometry args={[1, 2, 0.5]} /><meshStandardMaterial color="#cccccc" /></mesh>}>
-            <GarmentModel garment={garment} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} pantsType={pantsType} />
+            <GarmentModel garment={garment} size={size} fit={fit} colors={colors} fabric={fabric} pattern={pattern} style={style} measurements={measurements} personalization={personalization} pantsType={pantsType} />
           </Suspense>
         </Stage>
         <directionalLight position={[4, 6, -3]} intensity={0.6} color={garment === 'pants' ? '#b0c7ff' : '#bcd0ff'} />
         <directionalLight position={[-5, 3, 5]} intensity={0.3} color={garment === 'pants' ? '#ffd6b3' : '#ffddb7'} />
-        {garment === 'pants' && (
-          <Grid args={[10, 10]} position={[0, -0.001, 0]} cellSize={0.6} cellThickness={0.8} sectionSize={3.6} sectionThickness={1.2} fadeDistance={20} fadeStrength={1} infiniteGrid />
-        )}
+
         <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.6} far={4.5} />
         <OrbitControls enablePan={false} enabled={!isAnyButtonMoving} />
         <Environment preset="studio" />

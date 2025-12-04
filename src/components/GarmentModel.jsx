@@ -46,7 +46,7 @@ function makeBump() {
   return tex;
 }
 
-export default function GarmentModel({ garment, colors, fabric, pattern, style, measurements, personalization, pantsType }) {
+export default function GarmentModel({ garment, size, fit, colors, fabric, pattern, style, measurements, personalization, pantsType }) {
   const baseColor = colors.fabric;
   const accent = colors.stitching;
   const map = useMemo(() => makePattern(pattern, baseColor, accent), [pattern, baseColor, accent]);
@@ -72,7 +72,9 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
 
   // Load all 3D models unconditionally (hooks must be called at top level)
   const blackBlazer = useGLTF('/black blazer 3d model.glb');
+  const blackBlazerPlain = useGLTF('/black blazer plain 3d model.glb');
   const blazerWomen = useGLTF('/blazer 3d model.glb');
+  const blazerWomenPlain = useGLTF('/blazer 3d women plain model.glb');
   const tealCoat = useGLTF('/teal long coat 3d model.glb');
   const barongModel = useGLTF('/barong tagalog shirt 3d model.glb');
   const suit1 = useGLTF('/business suit 3d model.glb');
@@ -88,9 +90,15 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   if (garment === 'coat-men') {
     use3DModel = true;
     selectedModel = blackBlazer.scene;
+  } else if (garment === 'coat-men-plain') {
+    use3DModel = true;
+    selectedModel = blackBlazerPlain.scene;
   } else if (garment === 'coat-women') {
     use3DModel = true;
     selectedModel = blazerWomen.scene;
+  } else if (garment === 'coat-women-plain') {
+    use3DModel = true;
+    selectedModel = blazerWomenPlain.scene;
   } else if (garment === 'coat-teal') {
     use3DModel = true;
     selectedModel = tealCoat.scene;
@@ -106,6 +114,34 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   }
 
   const modelScene = useMemo(() => selectedModel ? selectedModel.clone() : null, [selectedModel]);
+
+  // Calculate scale based on size and fit selection
+  const sizeScale = useMemo(() => {
+    let baseScale;
+    switch (size) {
+      case 'small':
+        baseScale = 1.4; // Smaller scale
+        break;
+      case 'large':
+        baseScale = 1.6; // Larger scale
+        break;
+      case 'medium':
+      default:
+        baseScale = 1.5; // Default scale
+        break;
+    }
+    
+    // Adjust scale based on fit
+    switch (fit) {
+      case 'loose':
+        return baseScale * 1.05; // 5% larger for loose fit
+      case 'fitted':
+        return baseScale * 0.95; // 5% smaller for fitted fit
+      case 'regular':
+      default:
+        return baseScale; // No adjustment for regular fit
+    }
+  }, [size, fit]);
 
   useLayoutEffect(() => {
     if (use3DModel && modelScene) {
@@ -149,7 +185,7 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
     if (!pantsModelScene) return null;
 
     return (
-      <group position={[0, 0, 0]} scale={1.5}>
+      <group position={[0, 0, 0]} scale={sizeScale}>
         <primitive object={pantsModelScene} />
         {personalization.initials && (
           <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
@@ -170,7 +206,7 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   if (garment.startsWith('coat')) {
     if (!modelScene) return null;
     return (
-      <group position={[0, 0, 0]} scale={1.5}>
+      <group position={[0, 0, 0]} scale={sizeScale}>
         <primitive object={modelScene} />
         {/* Default buttons removed - use 3D Buttons panel to add custom buttons */}
         {personalization.initials && (
@@ -186,7 +222,7 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   if (garment === 'barong') {
     if (!modelScene) return null;
     return (
-      <group position={[0, 0, 0]} scale={1.5}>
+      <group position={[0, 0, 0]} scale={sizeScale}>
         <primitive object={modelScene} />
         {personalization.initials && (
           <Text position={[0, 1.5, 0.3]} fontSize={personalization.size * 0.25} color={colors.stitching}>
@@ -201,7 +237,7 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
   if (garment.startsWith('suit')) {
     if (!modelScene) return null;
     return (
-      <group position={[0, 0, 0]} scale={1.5}>
+      <group position={[0, 0, 0]} scale={sizeScale}>
         <primitive object={modelScene} />
         {/* Default buttons removed - use 3D Buttons panel to add custom buttons */}
         {personalization.initials && (
@@ -378,7 +414,9 @@ export default function GarmentModel({ garment, colors, fabric, pattern, style, 
 
 useGLTF.preload('/teal long coat 3d model.glb');
 useGLTF.preload('/black blazer 3d model.glb');
+useGLTF.preload('/black blazer plain 3d model.glb');
 useGLTF.preload('/blazer 3d model.glb');
+useGLTF.preload('/blazer 3d women plain model.glb');
 useGLTF.preload('/barong tagalog shirt 3d model.glb');
 useGLTF.preload('/business suit 3d model.glb');
 useGLTF.preload('/business suit 3d model (1).glb');

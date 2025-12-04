@@ -36,6 +36,8 @@ const pantsStyle = { fit: 'regular', pleats: 'none', cuffs: 'none' };
 
 export default function App() {
   const [garment, setGarment] = useState('coat-men');
+  const [size, setSize] = useState('medium'); // Added size state for blazers
+  const [fit, setFit] = useState('regular'); // Added fit state for all garments
   const [colors, setColors] = useState(defaultColors);
   const [fabric, setFabric] = useState('wool');
   const [pattern, setPattern] = useState('none');
@@ -54,6 +56,8 @@ export default function App() {
       const v = JSON.parse(saved);
       if (v) {
         setGarment(v.garment || 'coat');
+        setSize(v.size || 'medium');
+        setFit(v.fit || 'regular');
         setColors(v.colors || defaultColors);
         setFabric(v.fabric || 'wool');
         setPattern(v.pattern || 'none');
@@ -75,6 +79,8 @@ export default function App() {
 
   const summary = useMemo(() => ({
     garment,
+    size,
+    fit,
     colors,
     fabric,
     pattern,
@@ -85,7 +91,7 @@ export default function App() {
     notes,
     buttons,
     pantsType,
-  }), [garment, colors, fabric, pattern, style, measurements, personalization, buttons]);
+  }), [garment, size, fit, colors, fabric, pattern, style, measurements, personalization, buttons]);
 
   const onSave = () => {
     localStorage.setItem('tailorDesign', JSON.stringify(summary));
@@ -121,6 +127,10 @@ export default function App() {
         <CustomizationPanel
           garment={garment}
           setGarment={setGarment}
+          size={size}
+          setSize={setSize}
+          fit={fit}
+          setFit={setFit}
           colors={colors}
           setColors={setColors}
           fabric={fabric}
@@ -148,6 +158,8 @@ export default function App() {
       <div className="viewer">
         <Viewer3D
           garment={garment}
+          size={size}
+          fit={fit}
           colors={colors}
           fabric={fabric}
           pattern={pattern}

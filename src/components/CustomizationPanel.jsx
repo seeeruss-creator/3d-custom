@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
-export default function CustomizationPanel({ garment, setGarment, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, pantsType, setPantsType, onReview }) {
+export default function CustomizationPanel({ garment, setGarment, size, setSize, fit, setFit, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, pantsType, setPantsType, onReview }) {
   const [selectedButtonModel, setSelectedButtonModel] = useState('/orange button 3d model.glb');
 
   const availableButtonModels = [
     { name: 'Orange Button', path: '/orange button 3d model.glb' },
+    { name: 'Four Hole Button', path: '/four hole button 3d model (1).glb' },
   ];
 
   const addButton = () => {
@@ -43,15 +44,35 @@ export default function CustomizationPanel({ garment, setGarment, colors, setCol
 
   return (
     <div className="group">
-      {(garment === 'coat-men' || garment === 'coat-women' || garment === 'coat-teal') && (
+      {(garment.startsWith('coat-')) && (
         <>
           <h3>Coat Type</h3>
           <div className="row">
             <label>Select Type
               <select value={garment} onChange={e => setGarment(e.target.value)}>
                 <option value="coat-men">Blazer (Men)</option>
+                <option value="coat-men-plain">Blazer Coat (Men) Plain</option>
                 <option value="coat-women">Blazer (Women)</option>
+                <option value="coat-women-plain">Blazer Coat (Women) Plain</option>
                 <option value="coat-teal">Teal Long Coat</option>
+              </select>
+            </label>
+          </div>
+          <div className="row">
+            <label>Size
+              <select value={size} onChange={e => setSize(e.target.value)}>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </label>
+          </div>
+          <div className="row">
+            <label>Fit
+              <select value={fit} onChange={e => setFit(e.target.value)}>
+                <option value="regular">Regular</option>
+                <option value="loose">Loose</option>
+                <option value="fitted">Fitted</option>
               </select>
             </label>
           </div>
@@ -69,6 +90,30 @@ export default function CustomizationPanel({ garment, setGarment, colors, setCol
               </select>
             </label>
           </div>
+          <div className="row">
+            <label>Fit
+              <select value={fit} onChange={e => setFit(e.target.value)}>
+                <option value="regular">Regular</option>
+                <option value="loose">Loose</option>
+                <option value="fitted">Fitted</option>
+              </select>
+            </label>
+          </div>
+        </>
+      )}
+
+      {garment === 'barong' && (
+        <>
+          <h3>Barong Settings</h3>
+          <div className="row">
+            <label>Fit
+              <select value={fit} onChange={e => setFit(e.target.value)}>
+                <option value="regular">Regular</option>
+                <option value="loose">Loose</option>
+                <option value="fitted">Fitted</option>
+              </select>
+            </label>
+          </div>
         </>
       )}
 
@@ -81,6 +126,15 @@ export default function CustomizationPanel({ garment, setGarment, colors, setCol
                 <option value="casual-men">Pants (Men Casual)</option>
                 <option value="formal-men">Pants (Men Formal)</option>
                 <option value="formal-women">Pants (Women Formal)</option>
+              </select>
+            </label>
+          </div>
+          <div className="row">
+            <label>Fit
+              <select value={fit} onChange={e => setFit(e.target.value)}>
+                <option value="regular">Regular</option>
+                <option value="loose">Loose</option>
+                <option value="fitted">Fitted</option>
               </select>
             </label>
           </div>
