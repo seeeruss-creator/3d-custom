@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import styles from './CustomizationPanel.module.css';
 
-export default function CustomizationPanel({ garment, setGarment, size, setSize, fit, setFit, modelSize, setModelSize, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, pantsType, setPantsType, onReview }) {
+export default function CustomizationPanel({ garment, setGarment, size, setSize, fit, setFit, modelSize, setModelSize, colors, setColors, fabric, setFabric, patterns, pattern, setPattern, fabrics, designImage, setDesignImage, notes, setNotes, buttons, setButtons, accessories, setAccessories, pantsType, setPantsType, onReview }) {
   const [selectedButtonModel, setSelectedButtonModel] = useState('/orange button 3d model.glb');
+  const [selectedAccessoryModel, setSelectedAccessoryModel] = useState('/accessories/gold lion pendant 3d model.glb');
+  const [selectedButtonId, setSelectedButtonId] = useState(null);
+  const [selectedAccessoryId, setSelectedAccessoryId] = useState(null);
 
   const availableButtonModels = [
     { name: 'Orange Button', path: '/orange button 3d model.glb' },
     { name: 'Four Hole Button', path: '/four hole button 3d model (1).glb' },
+  ];
+
+  const availableAccessoryModels = [
+    { name: 'Pendant', path: '/accessories/gold lion pendant 3d model.glb' },
+    { name: 'Brooch', path: '/accessories/flower brooch 3d model.glb' },
+    { name: 'Flower', path: '/accessories/fabric rose 3d model.glb' },
   ];
 
   const addButton = () => {
@@ -29,6 +39,81 @@ export default function CustomizationPanel({ garment, setGarment, size, setSize,
 
   const updateButtonScale = (id, scale) => {
     setButtons(buttons.map(btn => btn.id === id ? { ...btn, scale } : btn));
+  };
+
+  const addAccessory = () => {
+    const newAccessory = {
+      id: Date.now(),
+      modelPath: selectedAccessoryModel,
+      position: [0, 1.3, 0.5],
+      color: colors.fabric,
+      scale: 0.2,
+    };
+    setAccessories([...accessories, newAccessory]);
+  };
+
+  const deleteAccessory = (id) => {
+    setAccessories(accessories.filter(acc => acc.id !== id));
+  };
+
+  const updateAccessoryColor = (id, color) => {
+    setAccessories(accessories.map(acc => acc.id === id ? { ...acc, color } : acc));
+  };
+
+  const updateAccessoryScale = (id, scale) => {
+    setAccessories(accessories.map(acc => acc.id === id ? { ...acc, scale } : acc));
+  };
+
+  // Position controller functions
+  const moveStep = 0.05; // Movement increment
+
+  const moveSelectedItem = (axis, direction) => {
+    const delta = direction * moveStep;
+
+    if (selectedButtonId) {
+      setButtons(buttons.map(btn => {
+        if (btn.id === selectedButtonId) {
+          const newPosition = [...btn.position];
+          if (axis === 'x') newPosition[0] += delta;
+          if (axis === 'y') newPosition[1] += delta;
+          if (axis === 'z') newPosition[2] += delta;
+          return { ...btn, position: newPosition };
+        }
+        return btn;
+      }));
+    }
+
+    if (selectedAccessoryId) {
+      setAccessories(accessories.map(acc => {
+        if (acc.id === selectedAccessoryId) {
+          const newPosition = [...acc.position];
+          if (axis === 'x') newPosition[0] += delta;
+          if (axis === 'y') newPosition[1] += delta;
+          if (axis === 'z') newPosition[2] += delta;
+          return { ...acc, position: newPosition };
+        }
+        return acc;
+      }));
+    }
+  };
+
+  // Get name of selected item
+  const getSelectedItemName = () => {
+    if (selectedButtonId) {
+      const btn = buttons.find(b => b.id === selectedButtonId);
+      if (btn) {
+        const index = buttons.indexOf(btn);
+        return `Button ${index + 1}`;
+      }
+    }
+    if (selectedAccessoryId) {
+      const acc = accessories.find(a => a.id === selectedAccessoryId);
+      if (acc) {
+        const index = accessories.indexOf(acc);
+        return `Accessory ${index + 1}`;
+      }
+    }
+    return null;
   };
 
   // Preset color options
@@ -154,22 +239,15 @@ export default function CustomizationPanel({ garment, setGarment, size, setSize,
         <label>Fabric color<input className="color-input" type="color" value={colors.fabric} onChange={e => setColors({ ...colors, fabric: e.target.value })} /></label>
         <label>Button color<input className="color-input" type="color" value={colors.button} onChange={e => setColors({ ...colors, button: e.target.value })} /></label>
       </div>
-      <div className="row" style={{ marginTop: 8 }}>
-        <label style={{ width: '100%' }}>Preset Colors</label>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 4 }}>
+      <div className={styles.presetColorsContainer}>
+        <label className={styles.presetColorsLabel}>Preset Colors</label>
+        <div className={styles.presetColorsGrid}>
           {presetColors.map((color) => (
             <button
               key={color.value}
               onClick={() => setColors({ ...colors, fabric: color.value })}
-              style={{
-                width: '40px',
-                height: '40px',
-                backgroundColor: color.value,
-                border: colors.fabric === color.value ? '3px solid #000' : '2px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                padding: 0,
-              }}
+              className={`${styles.presetColorButton} ${colors.fabric === color.value ? styles.selected : styles.unselected}`}
+              style={{ backgroundColor: color.value }}
               title={color.name}
             />
           ))}
@@ -191,40 +269,161 @@ export default function CustomizationPanel({ garment, setGarment, size, setSize,
             ))}
           </select>
         </label>
-        <button onClick={addButton} style={{ marginLeft: 8 }}>Add Button</button>
+        <button onClick={addButton} className={styles.premiumButton} style={{ marginLeft: 8 }}>Add Button</button>
       </div>
 
       {buttons && buttons.length > 0 && (
-        <div className="row" style={{ marginTop: 8 }}>
-          <label style={{ width: '100%' }}>Current Buttons ({buttons.length})</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 4, width: '100%' }}>
-            {buttons.map((btn, index) => (
-              <div key={btn.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ flex: 1 }}>Button {index + 1}</span>
+        <div className={styles.itemsList}>
+          <label className={styles.itemsLabel}>Current Buttons ({buttons.length})</label>
+          {buttons.map((btn, index) => (
+            <div key={btn.id} className={styles.itemCard}>
+              <div className={styles.itemCardHeader}>
+                <span className={styles.itemCardTitle}>Button {index + 1}</span>
+                <div className={styles.itemCardActions}>
+                  <button
+                    onClick={() => setSelectedButtonId(btn.id === selectedButtonId ? null : btn.id)}
+                    className={`${styles.selectButton} ${selectedButtonId === btn.id ? styles.selected : styles.unselected}`}
+                  >
+                    {selectedButtonId === btn.id ? '✓ Selected' : 'Select'}
+                  </button>
                   <input
                     type="color"
                     value={btn.color}
                     onChange={(e) => updateButtonColor(btn.id, e.target.value)}
-                    style={{ width: '40px', height: '30px' }}
+                    className={styles.colorPicker}
                   />
-                  <button onClick={() => deleteButton(btn.id)} style={{ padding: '4px 8px', backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', minWidth: '40px' }}>Size:</label>
-                  <input
-                    type="range"
-                    min="0.05"
-                    max="0.3"
-                    step="0.01"
-                    value={btn.scale || 0.15}
-                    onChange={(e) => updateButtonScale(btn.id, parseFloat(e.target.value))}
-                    style={{ flex: 1 }}
-                  />
-                  <span style={{ fontSize: '12px', minWidth: '35px' }}>{((btn.scale || 0.15) * 100).toFixed(0)}%</span>
+                  <button onClick={() => deleteButton(btn.id)} className={styles.deleteButton}>Delete</button>
                 </div>
               </div>
+              <div className={styles.rangeContainer}>
+                <label className={styles.rangeLabel}>Size:</label>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.3"
+                  step="0.01"
+                  value={btn.scale || 0.15}
+                  onChange={(e) => updateButtonScale(btn.id, parseFloat(e.target.value))}
+                  className={styles.rangeSlider}
+                />
+                <span className={styles.rangeValue}>{((btn.scale || 0.15) * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h3>Accessories</h3>
+      <div className="row">
+        <label>Accessory Type
+          <select value={selectedAccessoryModel} onChange={e => setSelectedAccessoryModel(e.target.value)}>
+            {availableAccessoryModels.map(model => (
+              <option key={model.path} value={model.path}>{model.name}</option>
             ))}
+          </select>
+        </label>
+        <button onClick={addAccessory} className={styles.premiumButton} style={{ marginLeft: 8 }}>Add Accessory</button>
+      </div>
+
+      {accessories && accessories.length > 0 && (
+        <div className={styles.itemsList}>
+          <label className={styles.itemsLabel}>Current Accessories ({accessories.length})</label>
+          {accessories.map((acc, index) => (
+            <div key={acc.id} className={styles.itemCard}>
+              <div className={styles.itemCardHeader}>
+                <span className={styles.itemCardTitle}>Accessory {index + 1}</span>
+                <div className={styles.itemCardActions}>
+                  <button
+                    onClick={() => setSelectedAccessoryId(acc.id === selectedAccessoryId ? null : acc.id)}
+                    className={`${styles.selectButton} ${selectedAccessoryId === acc.id ? styles.selected : styles.unselected}`}
+                  >
+                    {selectedAccessoryId === acc.id ? '✓ Selected' : 'Select'}
+                  </button>
+                  <input
+                    type="color"
+                    value={acc.color}
+                    onChange={(e) => updateAccessoryColor(acc.id, e.target.value)}
+                    className={styles.colorPicker}
+                  />
+                  <button onClick={() => deleteAccessory(acc.id)} className={styles.deleteButton}>Delete</button>
+                </div>
+              </div>
+              <div className={styles.rangeContainer}>
+                <label className={styles.rangeLabel}>Size:</label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="0.5"
+                  step="0.01"
+                  value={acc.scale || 0.2}
+                  onChange={(e) => updateAccessoryScale(acc.id, parseFloat(e.target.value))}
+                  className={styles.rangeSlider}
+                />
+                <span className={styles.rangeValue}>{((acc.scale || 0.2) * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(selectedButtonId || selectedAccessoryId) && (
+        <div className={styles.positionController}>
+          <div className={styles.controllerTitle}>
+            Controlling: {getSelectedItemName()}
+          </div>
+
+          <div className={styles.controllerSection}>
+            <label className={styles.controllerSectionLabel}>Vertical (Up/Down)</label>
+            <div className={styles.controllerButtons}>
+              <button
+                onClick={() => moveSelectedItem('y', 1)}
+                className={`${styles.controlButton} ${styles.controlButtonVertical}`}
+              >
+                ↑ Up
+              </button>
+              <button
+                onClick={() => moveSelectedItem('y', -1)}
+                className={`${styles.controlButton} ${styles.controlButtonVertical}`}
+              >
+                ↓ Down
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.controllerSection}>
+            <label className={styles.controllerSectionLabel}>Horizontal (Left/Right)</label>
+            <div className={styles.controllerButtons}>
+              <button
+                onClick={() => moveSelectedItem('x', -1)}
+                className={`${styles.controlButton} ${styles.controlButtonHorizontal}`}
+              >
+                ← Left
+              </button>
+              <button
+                onClick={() => moveSelectedItem('x', 1)}
+                className={`${styles.controlButton} ${styles.controlButtonHorizontal}`}
+              >
+                → Right
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.controllerSection}>
+            <label className={styles.controllerSectionLabel}>Depth (Forward/Backward)</label>
+            <div className={styles.controllerButtons}>
+              <button
+                onClick={() => moveSelectedItem('z', 1)}
+                className={`${styles.controlButton} ${styles.controlButtonDepth}`}
+              >
+                ⬆ Forward
+              </button>
+              <button
+                onClick={() => moveSelectedItem('z', -1)}
+                className={`${styles.controlButton} ${styles.controlButtonDepth}`}
+              >
+                ⬇ Backward
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -245,7 +444,7 @@ export default function CustomizationPanel({ garment, setGarment, size, setSize,
       </div>
 
       <div className="row" style={{ marginTop: 8 }}>
-        <button onClick={onReview}>Review Order</button>
+        <button onClick={onReview} className={styles.reviewButton}>Review Order</button>
       </div>
     </div>
   );

@@ -153,6 +153,9 @@ export default function GarmentModel({ garment, size, fit, modelSize, colors, fa
 
   useLayoutEffect(() => {
     if (use3DModel && modelScene) {
+      // Rotate model to face forward (toward camera)
+      modelScene.rotation.y = -Math.PI / 2; // -90 degrees
+
       modelScene.traverse((child) => {
         if (child.isMesh) {
           child.material = new THREE.MeshPhysicalMaterial(materialProps);
@@ -179,6 +182,9 @@ export default function GarmentModel({ garment, size, fit, modelSize, colors, fa
 
   useLayoutEffect(() => {
     if (pantsModelScene) {
+      // Rotate model to face forward (toward camera)
+      pantsModelScene.rotation.y = -Math.PI / 2; // -90 degrees
+
       pantsModelScene.traverse((child) => {
         if (child.isMesh) {
           child.material = new THREE.MeshPhysicalMaterial(materialProps);

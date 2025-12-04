@@ -13,6 +13,9 @@ export default function DraggableButton({ id, modelPath, position, color, scale 
 
     useLayoutEffect(() => {
         if (clonedScene) {
+            // Rotate model to face forward (toward camera)
+            clonedScene.rotation.y = -Math.PI / 2; // -90 degrees
+
             clonedScene.traverse((child) => {
                 if (child.isMesh) {
                     child.material = new THREE.MeshPhysicalMaterial({
