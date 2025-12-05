@@ -1,0 +1,40 @@
+﻿/* Mobile Responsive Styles - Updated */
+@media (max-width: 768px) {
+  .mobile-toggle {
+    display: block;
+  }
+
+  .panel.mobile-hidden,
+  .viewer.mobile-hidden {
+    display: none !important;
+  }
+
+  .panel.mobile-visible {
+    display: block;
+    grid-area: unset;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    border-right: none;
+    border-bottom: none;
+    max-height: calc(100vh - 140px);
+    padding: 16px;
+    padding-bottom: 100px;
+    overflow-y: auto;
+    z-index: 10;
+  }
+
+  .viewer.mobile-visible {
+    display: block;
+    grid-area: unset;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    height: calc(100vh - 140px);
+    z-index: 10;
+  }
+}

@@ -1,28 +1,52 @@
-* { 
-  box-sizing: border-box; 
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body, #root { 
-  height: 100%; 
+html,
+body,
+#root {
+  height: 100%;
   overflow: hidden;
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .app {
@@ -45,7 +69,7 @@ html, body, #root {
   display: flex;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(16, 20, 26, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -55,7 +79,7 @@ html, body, #root {
 
 .nav button {
   background: linear-gradient(135deg, rgba(42, 48, 60, 0.6), rgba(26, 31, 39, 0.8));
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #cfd3dc;
   padding: 12px 20px;
   border-radius: 12px;
@@ -74,7 +98,7 @@ html, body, #root {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transition: left 0.5s;
 }
 
@@ -88,7 +112,7 @@ html, body, #root {
   border-color: rgba(99, 102, 241, 0.5);
 }
 
-.nav button.active { 
+.nav button.active {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
@@ -103,7 +127,7 @@ html, body, #root {
   background: rgba(16, 20, 26, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255,255,255,0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -125,7 +149,7 @@ html, body, #root {
   background: linear-gradient(180deg, #8b5cf6, #6366f1);
 }
 
-.panel h3 { 
+.panel h3 {
   margin: 24px 0 12px;
   font-weight: 600;
   font-size: 16px;
@@ -149,22 +173,22 @@ html, body, #root {
   border-radius: 2px;
 }
 
-.group { 
-  display: grid; 
+.group {
+  display: grid;
   gap: 14px;
   animation: fadeIn 0.6s ease-out;
 }
 
-.row { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.row label { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
+.row label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   font-size: 13px;
   font-weight: 500;
   color: #b8bcc8;
@@ -175,9 +199,10 @@ html, body, #root {
   color: #e7e9ee;
 }
 
-.row input, .row select {
+.row input,
+.row select {
   background: rgba(21, 25, 34, 0.8);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #e7e9ee;
   padding: 10px 12px;
   border-radius: 10px;
@@ -186,19 +211,21 @@ html, body, #root {
   backdrop-filter: blur(10px);
 }
 
-.row input:focus, .row select:focus {
+.row input:focus,
+.row select:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
   background: rgba(21, 25, 34, 1);
 }
 
-.row input:hover, .row select:hover {
+.row input:hover,
+.row select:hover {
   border-color: rgba(99, 102, 241, 0.5);
 }
 
-.color-input { 
-  height: 44px; 
+.color-input {
+  height: 44px;
   padding: 4px;
   cursor: pointer;
   border-radius: 10px;
@@ -222,7 +249,7 @@ html, body, #root {
 .top-actions button {
   background: rgba(26, 31, 39, 0.8);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #cfd3dc;
   padding: 10px 16px;
   border-radius: 10px;
@@ -238,30 +265,12 @@ html, body, #root {
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
 }
 
-.summary {
-  margin-top: 20px;
-  padding: 16px;
-  background: linear-gradient(135deg, rgba(18, 22, 29, 0.8), rgba(26, 31, 39, 0.6));
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  font-size: 12px;
-  color: #b9bec9;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  animation: fadeIn 0.8s ease-out;
-}
-
-.summary div {
-  margin: 6px 0;
-  line-height: 1.6;
-}
-
 /* Mobile Responsive Styles */
 @media (max-width: 1024px) {
   .app {
     grid-template-columns: 360px 1fr;
   }
-  
+
   .panel {
     padding: 16px;
   }
@@ -270,44 +279,40 @@ html, body, #root {
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 55vh 45vh;
     grid-template-areas:
       "nav"
-      "panel"
-      "viewer";
+      "viewer"
+      "panel";
   }
-  
+
   .nav {
     padding: 12px;
     gap: 8px;
     flex-wrap: wrap;
   }
-  
+
   .nav button {
     padding: 10px 16px;
     font-size: 13px;
     flex: 1;
     min-width: calc(50% - 4px);
   }
-  
+
   .panel {
     border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    max-height: 50vh;
-    padding: 16px;
+    border-top: 2px solid rgba(99, 102, 241, 0.5);
+    max-height: 45vh;
+    padding: 12px;
+    overflow-y: auto;
   }
-  
+
   .viewer {
-    height: 50vh;
+    height: 55vh;
   }
-  
+
   .row {
     grid-template-columns: 1fr;
-  }
-  
-  .summary {
-    font-size: 11px;
-    padding: 12px;
   }
 }
 
@@ -316,24 +321,38 @@ html, body, #root {
     min-width: 100%;
     padding: 12px;
   }
-  
+
   .panel {
     padding: 12px;
   }
-  
+
   .panel h3 {
     font-size: 14px;
     margin: 16px 0 10px;
   }
-  
+
   .top-actions {
     top: 8px;
     right: 8px;
     gap: 6px;
   }
-  
+
   .top-actions button {
     padding: 8px 12px;
     font-size: 12px;
   }
+}
+
+/* Download Button */
+.nav button.download-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  margin-left: auto;
+}
+
+.nav button.download-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
 }

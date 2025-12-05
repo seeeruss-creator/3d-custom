@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Viewer3D from './components/Viewer3D';
-import ReviewPage from './components/ReviewPage';
+
 import CustomizationPanel from './components/CustomizationPanel';
 
 const defaultMeasurements = {
@@ -47,10 +47,11 @@ export default function App() {
   const [personalization, setPersonalization] = useState(defaultPersonalization);
   const [designImage, setDesignImage] = useState(null);
   const [notes, setNotes] = useState('');
-  const [showReview, setShowReview] = useState(false);
+
   const [buttons, setButtons] = useState([]);
   const [accessories, setAccessories] = useState([]);
   const [pantsType, setPantsType] = useState('casual-men');
+  const [mobileView, setMobileView] = useState('viewer'); // 'viewer' or 'controls'
 
   useEffect(() => {
     const saved = localStorage.getItem('tailorDesign');
@@ -103,23 +104,7 @@ export default function App() {
     localStorage.setItem('tailorDesign', JSON.stringify(summary));
   };
 
-  if (showReview) {
-    return (
-      <ReviewPage
-        garment={garment}
-        colors={colors}
-        fabric={fabric}
-        pattern={pattern}
-        style={style}
-        measurements={measurements}
-        personalization={personalization}
-        designImage={designImage}
-        notes={notes}
-        onBack={() => setShowReview(false)}
-        onSubmit={() => alert('Order Submitted!')}
-      />
-    );
-  }
+
 
   return (
     <div className="app">
@@ -128,7 +113,15 @@ export default function App() {
         <button className={garment === 'barong' ? 'active' : ''} onClick={() => setGarment('barong')}>Barong</button>
         <button className={garment.startsWith('suit') ? 'active' : ''} onClick={() => setGarment('suit-1')}>Suit</button>
         <button className={garment === 'pants' ? 'active' : ''} onClick={() => setGarment('pants')}>Pants</button>
+        <button
+          className="download-btn"
+          onClick={() => document.dispatchEvent(new Event('export-png'))}
+          title="Download as PNG"
+        >
+          📥 Download PNG
+        </button>
       </div>
+
       <div className="panel">
         <CustomizationPanel
           garment={garment}
@@ -157,13 +150,9 @@ export default function App() {
           setAccessories={setAccessories}
           pantsType={pantsType}
           setPantsType={setPantsType}
-          onReview={() => setShowReview(true)}
+
         />
-        <div className="summary">
-          <div>Garment: {garment}</div>
-          <div>Fabric: {fabric} | Pattern: {pattern}</div>
-          <div>Colors: fabric {colors.fabric}, lining {colors.lining}, button {colors.button}, stitching {colors.stitching}</div>
-        </div>
+
       </div>
       <div className="viewer">
         <Viewer3D
